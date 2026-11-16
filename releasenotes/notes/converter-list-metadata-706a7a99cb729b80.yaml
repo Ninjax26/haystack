@@ -1,0 +1,6 @@
+fixes:
+  - |
+    Converters now copy each dictionary in list-form ``meta`` independently,
+    including nested values. Mutating a converted document's metadata no longer
+    changes the caller's metadata or another document that used the same input
+    dictionary.

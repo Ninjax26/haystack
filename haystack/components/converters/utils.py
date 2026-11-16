@@ -67,9 +67,9 @@ def normalize_metadata(meta: dict[str, Any] | list[dict[str, Any]] | None, sourc
     :param sources_count: the number of sources the converter received
     :returns: a list of dictionaries of the make length as the sources list
 
-    Each source always gets its own independent dictionary. When ``meta`` is ``None`` or a single
-    dictionary, a separate copy is returned for every source so that mutating one source's metadata
-    downstream does not leak into the others.
+    Each source gets its own independent dictionary, including nested values. A separate copy is
+    returned for every source so that downstream mutations do not affect another source or the caller's
+    metadata, even when the same dictionary appears more than once in a list.
     """
     if meta is None:
         return [{} for _ in range(sources_count)]
@@ -78,5 +78,5 @@ def normalize_metadata(meta: dict[str, Any] | list[dict[str, Any]] | None, sourc
     if isinstance(meta, list):
         if sources_count != len(meta):
             raise ValueError("The length of the metadata list must match the number of sources.")
-        return meta
+        return [deepcopy(item) for item in meta]
     raise ValueError("meta must be either None, a dictionary or a list of dictionaries.")

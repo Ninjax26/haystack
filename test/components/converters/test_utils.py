@@ -4,6 +4,7 @@
 
 import pytest
 
+from haystack.components.converters.txt import TextFileToDocument
 from haystack.components.converters.utils import get_bytestream_from_source, normalize_metadata
 from haystack.dataclasses import ByteStream
 
@@ -36,6 +37,21 @@ def test_normalize_metadata_single_dict_returns_independent_copies():
 def test_normalize_metadata_list_of_right_size():
     assert normalize_metadata([{"a": 1}], sources_count=1) == [{"a": 1}]
     assert normalize_metadata([{"a": 1}, {"b": 2}, {"c": 3}], sources_count=3) == [{"a": 1}, {"b": 2}, {"c": 3}]
+
+
+@pytest.mark.parametrize("reuse_dictionary", [True, False])
+def test_converter_list_metadata_is_independent(reuse_dictionary: bool) -> None:
+    shared = {"tags": ["original"]}
+    metadata = [shared, shared if reuse_dictionary else {"tags": ["original"]}]
+    documents = TextFileToDocument().run(
+        sources=[ByteStream.from_string("first"), ByteStream.from_string("second")], meta=metadata
+    )["documents"]
+
+    documents[0].meta["tags"].append("updated")
+
+    assert documents[0].meta == {"tags": ["original", "updated"]}
+    assert documents[1].meta == {"tags": ["original"]}
+    assert metadata == [{"tags": ["original"]}, {"tags": ["original"]}]
 
 
 def test_normalize_metadata_list_of_wrong_size():
